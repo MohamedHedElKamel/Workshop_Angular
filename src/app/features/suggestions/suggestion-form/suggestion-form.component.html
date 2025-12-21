@@ -1,0 +1,52 @@
+<h2>Ajouter une suggestion</h2>
+
+<form [formGroup]="form" (ngSubmit)="submit()" class="suggestion-form">
+
+  
+  <div class="form-group">
+    <label id="Lol">Titre :</label>
+    <input type="text" formControlName="title">
+    <div class="error" *ngIf="form.get('title')?.invalid && form.get('title')?.touched">
+      <small *ngIf="form.get('title')?.errors?.['required']">Titre obligatoire</small>
+      <small *ngIf="form.get('title')?.errors?.['minlength']">Min 5 caractères</small>
+      <small *ngIf="form.get('title')?.errors?.['pattern']">
+        Doit commencer par une majuscule et contenir uniquement des lettres
+      </small>
+    </div>
+  </div>
+
+  
+  <div class="form-group">
+    <label>Description :</label>
+    <textarea formControlName="description"></textarea>
+    <div class="error" *ngIf="form.get('description')?.invalid && form.get('description')?.touched">
+      <small *ngIf="form.get('description')?.errors?.['required']">Description obligatoire</small>
+      <small *ngIf="form.get('description')?.errors?.['minlength']">Min 30 caractères</small>
+    </div>
+  </div>
+
+  
+  <div class="form-group">
+    <label>Catégorie :</label>
+    <select formControlName="category">
+      <option value="">Sélectionner...</option>
+      <option *ngFor="let c of categories" [value]="c">{{ c }}</option>
+    </select>
+    <div class="error" *ngIf="form.get('category')?.invalid && form.get('category')?.touched">
+      <small>Catégorie obligatoire</small>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label>Date :</label>
+    <input type="text" formControlName="date" readonly>
+  </div>
+
+
+  <div class="form-group">
+    <label>Status :</label>
+    <input type="text" formControlName="status" readonly>
+  </div>
+
+  <button type="submit" [disabled]="form.invalid">Soumettre</button>
+</form>

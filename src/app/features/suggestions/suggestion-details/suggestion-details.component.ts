@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Suggestion } from '../../../models/suggestion';
+import { SuggestionService } from '../../../core/services/suggestion.service';
 
 @Component({
   selector: 'app-suggestion-details',
@@ -10,68 +11,46 @@ import { Suggestion } from '../../../models/suggestion';
 export class SuggestionDetailsComponent implements OnInit {
 
   suggestion?: Suggestion;
+  id!: number;
+  suggestions: Suggestion[] = [];
 
-  suggestions: Suggestion[] = [
-    {
-      id: 1,
-      title: 'Organiser une journée team building',
-      description: 'Suggestion pour organiser une journée de team building pour renforcer les liens entre les membres de l\'équipe.',
-      category: 'Événements',
-      date: new Date('2025-01-20'),
-      status: 'acceptee',
-      likes: 0
-    },
-    {
-      id: 2,
-      title: 'Améliorer le système de réservation',
-      description: 'Proposition pour améliorer la gestion des réservations en ligne avec un système de confirmation automatique.',
-      category: 'Technologie',
-      date: new Date('2025-01-15'),
-      status: 'refusee',
-      likes: 0
-    },
-    {
-      id: 3,
-      title: 'Créer un système de récompenses',
-      description: 'Mise en place d\'un programme de récompenses pour motiver les employés.',
-      category: 'Ressources Humaines',
-      date: new Date('2025-01-25'),
-      status: 'refusee',
-      likes: 0
-    },
-        {
-      id: 4,
-      title: 'Créer un système de récompenses',
-      description: 'Mise en place d\'un programme de récompenses pour motiver les employés.',
-      category: 'Ressources Humaines',
-      date: new Date('2025-01-25'),
-      status: 'refusee',
-      likes: 0
-    },
-        {
-      id: 5,
-      title: 'Créer un système de récompenses',
-      description: 'Mise en place d\'un programme de récompenses pour motiver les employés.',
-      category: 'Ressources Humaines',
-      date: new Date('2025-01-25'),
-      status: 'refusee',
-      likes: 0
-    },
-        {
-      id: 6,
-      title: 'Créer un système de récompenses',
-      description: 'Mise en place d\'un programme de récompenses pour motiver les employés.',
-      category: 'Ressources Humaines',
-      date: new Date('2025-01-25'),
-      status: 'refusee',
-      likes: 0
-    }
-  ];
-
-  constructor(private route: ActivatedRoute) {}
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private suggestionService: SuggestionService
+  ) {}
 
   ngOnInit(): void {
-    const id = Number(this.route.snapshot.paramMap.get('id'));
-    this.suggestion = this.suggestions.find(s => s.id === id);
+    
+    this.suggestionService.getSuggestionsFromApi().subscribe({
+      next: data => this.suggestions = data,
+      error: err => console.error('Erreur API liste suggestions:', err)
+    });
+
+   
+    this.route.params.subscribe(params => {
+      this.id = Number(params['id']);
+      this.suggestionService.getSuggestionById(this.id).subscribe({
+        next: s => {
+          this.suggestion = s;
+        },
+        error: err => {
+          console.error('Erreur API suggestion:', err);
+          this.suggestion = undefined;
+        }
+      });
+    });
+  }
+
+  goNext() {
+    if (!this.suggestions || this.suggestions.length === 0) return;
+
+    const sortedSuggestions = [...this.suggestions].sort((a, b) => a.id - b.id);
+    const currentIndex = sortedSuggestions.findIndex(s => s.id === this.id);
+    
+    if (currentIndex !== -1 && currentIndex < sortedSuggestions.length - 1) {
+      const nextId = sortedSuggestions[currentIndex + 1].id;
+      this.router.navigate(['/suggestions', nextId]);
+    }
   }
 }

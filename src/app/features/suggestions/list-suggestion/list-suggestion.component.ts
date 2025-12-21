@@ -1,79 +1,67 @@
-import { Component } from '@angular/core';
-import { Suggestion } from '../../../models/suggestion'
+import { Component, OnInit } from '@angular/core';
+import { Suggestion } from '../../../models/suggestion';
+import { SuggestionService } from '../../../core/services/suggestion.service';
 
 @Component({
   selector: 'app-list-suggestion',
   templateUrl: './list-suggestion.component.html',
-  styleUrl: './list-suggestion.component.css'
+  styleUrls: ['./list-suggestion.component.css'] 
 })
-export class ListSuggestionComponent {
+export class ListSuggestionComponent implements OnInit {
+
+  suggestions: Suggestion[] = [];
   favorites: Suggestion[] = [];
   searchText: string = "";
-  get filteredSuggestions() {
-  return this.suggestions.filter(s =>
-    (s.title.toLowerCase().includes(this.searchText.toLowerCase())) ||
-    (s.category.toLowerCase().includes(this.searchText.toLowerCase()))
-  );
-}
-  suggestions: Suggestion[] = [
-    {
-      id: 1,
-      title: 'Organiser une journée team building',
-      description: 'Suggestion pour organiser une journée de team building pour renforcer les liens entre les membres de l\'équipe.',
-      category: 'Événements',
-      date: new Date('2025-01-20'),
-      status: 'acceptee',
-      likes:0
-      
-    },
-    {
-      id: 2,
-      title: 'Améliorer le système de réservation',
-      description: 'Proposition pour améliorer la gestion des réservations en ligne avec un système de confirmation automatique.',
-      category: 'Technologie',
-      date: new Date('2025-01-15'),
-      status: 'refusee',
-      likes:0
 
-    },
-    {
-      id: 3,
-      title: 'Créer un système de récompenses',
-      description: 'Mise en place d\'un programme de récompenses pour motiver les employés et reconnaître leurs efforts.',
-      category: 'Ressources Humaines',
-      date: new Date('2025-01-25'),
-      status: 'refusee',
-      likes:0
+  constructor(private suggestionService: SuggestionService) {}
 
-    },
-    {
-      id: 4,
-      title: 'Moderniser l\'interface utilisateur',
-      description: 'Refonte complète de l\'interface utilisateur pour une meilleure expérience utilisateur.',
-      category: 'Technologie',
-      date: new Date('2025-01-30'),
-      status: 'en_attente',
-      likes:0
-
-    },
-    {
-      id: 5,
-      title: 'Formation à la sécurité informatique',
-      description: 'Organisation d\'une formation sur les bonnes pratiques de sécurité informatique pour tous les employés.',
-      category: 'Formation',
-      date: new Date('2025-02-05'),
-      status: 'acceptee',
-      likes:0
-
+  ngOnInit() {
+  this.suggestionService.getSuggestionsFromApi().subscribe({
+    next: data => {
+      this.suggestions = data.map((s: any) => ({
+        ...s,
+        likes: s.likes ?? s.nbLikes ?? 0 
+      }));
     }
-  ];
-likeSuggestion(s: Suggestion) {
-    s.likes++;
+  });
+}
+  
+
+  get filteredSuggestions() {
+    return this.suggestions.filter(s =>
+      s.title.toLowerCase().includes(this.searchText.toLowerCase()) ||
+      s.category.toLowerCase().includes(this.searchText.toLowerCase())
+    );
   }
+
+likeSuggestion(s: Suggestion) {
+  const newLikes = (s.likes ?? 0) + 1;
+
+  this.suggestionService.likeSuggestion(s.id, newLikes).subscribe({
+    next: () => {
+      s.likes = newLikes; 
+    },
+    error: err => console.error(err)
+  });
+}
+
+
 
   addToFavorites(s: Suggestion) {
     if (!this.favorites.includes(s)) {
       this.favorites.push(s);
     }
   }
+
+ deleteSuggestion(s: Suggestion) {
+    if (!confirm(`Voulez-vous vraiment supprimer "${s.title}" ?`)) return;
+
+    this.suggestionService.deleteSuggestion(s.id).subscribe({
+      next: () => {
+        this.suggestions = this.suggestions.filter(item => item.id !== s.id);
+      },
+      error: (err) => console.error('Erreur lors de la suppression :', err)
+    });
+  }
+
 }
